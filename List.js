@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { StyleSheet, View } from 'react-native'
 import DraggableList from './DraggableList'
-import ListItem from './ListItem'
+import ListItem, { cellMargin, cellSize } from './ListItem'
 
 const s = StyleSheet.create({
   root: {
@@ -19,8 +19,8 @@ export default class List extends React.PureComponent {
     items: PropTypes.array.isRequired,
   }
 
-  renderItem = ({ item }) => {
-    return <ListItem item={item}/>
+  renderItem = ({ item, onLongPress }) => {
+    return <ListItem item={item} onLongPress={onLongPress}/>
   }
 
   keyExtractor = (item, index) => {
@@ -31,6 +31,7 @@ export default class List extends React.PureComponent {
     return (
       <View style={s.root}>
         <DraggableList
+          cellSize={cellSize + 2 * cellMargin}
           contentContainerStyle={s.list}
           items={this.props.items}
           keyExtractor={this.keyExtractor}

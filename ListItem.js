@@ -2,7 +2,8 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
 
-const cellSize = 80
+export const cellSize = 80
+export const cellMargin = 8
 
 const s = StyleSheet.create({
   item: {
@@ -12,7 +13,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'gray',
     padding: 8,
-    margin: 8,
+    margin: cellMargin,
   },
   text: {
     color: '#9f9',
@@ -23,12 +24,13 @@ const s = StyleSheet.create({
 export default class ListItem extends React.PureComponent {
   static propTypes = {
     item: PropTypes.string.isRequired,
+    onLongPress: PropTypes.func.isRequired,
   }
 
   render() {
-    const { item } = this.props
+    const { item, onLongPress } = this.props
     return (
-      <TouchableOpacity onLongPress={() => console.log('LONG')}>
+      <TouchableOpacity onLongPress={onLongPress}>
         <View style={s.item}>
           <Text style={s.text}>{item}</Text>
         </View>
