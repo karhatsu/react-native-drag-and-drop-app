@@ -24,6 +24,7 @@ export default class DraggableList extends React.PureComponent {
     super(props)
     this.state = {
       dragComponent: undefined,
+      dragComponentIndex: -1,
     }
     this.dragging = false
     this.dragStart = new Animated.Value(0)
@@ -48,7 +49,7 @@ export default class DraggableList extends React.PureComponent {
         this.dragMove.setValue(dx)
       },
       onPanResponderRelease: () => {
-        this.setState({ dragComponent: undefined })
+        this.setState({ dragComponent: undefined, dragComponentIndex: -1 })
         this.dragging = false
         this.dragMove.setValue(0)
       },
@@ -71,20 +72,25 @@ export default class DraggableList extends React.PureComponent {
     )
   }
 
-  onItemLongPress = (item) => {
+  onItemLongPress = (item, index) => {
     return () => {
       const dragComponent = this.renderItem({ item })
-      this.setState({ dragComponent })
+      this.setState({ dragComponent, dragComponentIndex: index })
     }
   }
 
   onItemPressOut = () => {
-    if (!this.dragging) this.setState({ dragComponent: undefined })
+    if (!this.dragging) this.setState({ dragComponent: undefined, dragComponentIndex: -1 })
   }
 
-  renderItem = ({ item }) => {
+  renderItem = ({ item, index }) => {
     const { renderItem } = this.props
-    return renderItem({ item, onLongPress: this.onItemLongPress(item), onPressOut: this.onItemPressOut })
+    const opacityStyle = this.state.dragComponentIndex === index ? 0 : 1
+    return (
+      <View style={{ opacity: opacityStyle }}>
+        {renderItem({ item, onLongPress: this.onItemLongPress(item, index), onPressOut: this.onItemPressOut })}
+      </View>
+    )
   }
 
   render() {
