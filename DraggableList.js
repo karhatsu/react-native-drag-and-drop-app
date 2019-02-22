@@ -13,7 +13,10 @@ const s = StyleSheet.create({
 const left = -1
 const right = 1
 
-const defaultState = {
+const scrollMargin = 50
+const scrollPixels = 20
+
+const defaultDragState = {
   dragComponent: undefined,
   dragComponentIndex: -1,
   dragDirection: 0,
@@ -32,7 +35,10 @@ export default class DraggableList extends React.PureComponent {
 
   constructor(props) {
     super(props)
-    this.state = defaultState
+    this.state = {
+      ...defaultDragState,
+      containerWidth: 0,
+    }
     this.scrollOffset = 0
     this.dragging = false
     this.dragStartComponentLeft = 0
@@ -56,6 +62,7 @@ export default class DraggableList extends React.PureComponent {
       },
       onPanResponderMove: (event, gestureState) => {
         const { cellSize } = this.props
+        const { pageX } = event.nativeEvent
         const { dx } = gestureState
         this.dragMove.setValue(dx)
         const dragStartComponentMiddle = this.scrollOffset + this.dragStartComponentLeft + cellSize / 2
@@ -67,17 +74,32 @@ export default class DraggableList extends React.PureComponent {
           //console.log('targetIndex:', this.state.targetIndex, '->', targetIndex)
           this.setState({ dragDirection, targetIndex })
         }
+        this.scrollOnEdge(pageX, targetIndex)
       },
       onPanResponderRelease: () => {
         const { dragComponentIndex, targetIndex } = this.state
         if (targetIndex !== dragComponentIndex) {
           this.props.onReorder(this.reorderItems(dragComponentIndex, targetIndex))
         }
-        this.setState(defaultState)
+        this.setState(defaultDragState)
         this.dragging = false
         this.dragMove.setValue(0)
       },
     })
+  }
+
+  scrollOnEdge = (pageX, targetIndex) => {
+    if (targetIndex === -1) return
+    if (targetIndex >= this.props.items.length) return this.flatList.scrollToEnd()
+    let newScrollOffset = 0
+    if (pageX < scrollMargin) {
+      newScrollOffset = Math.max(0, this.scrollOffset - scrollPixels)
+    } else if (pageX > this.state.containerWidth - scrollMargin) {
+      newScrollOffset = this.scrollOffset + scrollPixels
+    }
+    if (newScrollOffset) {
+      this.flatList.scrollToOffset({ offset: newScrollOffset })
+    }
   }
 
   reorderItems = (fromIndex, toIndex) => {
@@ -111,7 +133,7 @@ export default class DraggableList extends React.PureComponent {
   }
 
   onItemPressOut = () => {
-    if (!this.dragging) this.setState(defaultState)
+    if (!this.dragging) this.setState(defaultDragState)
   }
 
   renderPlaceholderItem = () => {
@@ -145,11 +167,17 @@ export default class DraggableList extends React.PureComponent {
     this.scrollOffset = nativeEvent.contentOffset.x
   }
 
+  onLayout = (event) => {
+    const { width } = event.nativeEvent.layout
+    this.setState({ containerWidth: width })
+  }
+
   render() {
     const { contentContainerStyle, items, keyExtractor } = this.props
     return (
-      <View {...this.panResponder.panHandlers}>
+      <View {...this.panResponder.panHandlers} onLayout={this.onLayout}>
         <FlatList
+          ref={ref => this.flatList = ref}
           contentContainerStyle={contentContainerStyle}
           data={items}
           extraData={this.state}
