@@ -26,6 +26,7 @@ export default class DraggableList extends React.PureComponent {
     contentContainerStyle: PropTypes.object,
     items: PropTypes.array.isRequired,
     keyExtractor: PropTypes.func.isRequired,
+    onReorder: PropTypes.func.isRequired,
     renderItem: PropTypes.func.isRequired,
   }
 
@@ -67,11 +68,22 @@ export default class DraggableList extends React.PureComponent {
         }
       },
       onPanResponderRelease: () => {
+        const { dragComponentIndex, targetIndex } = this.state
+        if (targetIndex !== dragComponentIndex) {
+          this.props.onReorder(this.reorderItems(dragComponentIndex, targetIndex))
+        }
         this.setState(defaultState)
         this.dragging = false
         this.dragMove.setValue(0)
       },
     })
+  }
+
+  reorderItems = (fromIndex, toIndex) => {
+    const items = [...this.props.items]
+    const [item] = items.splice(fromIndex, 1)
+    items.splice(toIndex, 0, item)
+    return items
   }
 
   resolveDragComponentContainerStyles = () => {

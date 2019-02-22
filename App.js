@@ -18,15 +18,26 @@ const s = StyleSheet.create({
 })
 
 export default class App extends React.Component {
-  render() {
+  constructor(props) {
+    super(props)
     let items = []
     for (let i = 0; i < itemsCount; i++) {
       items.push(`Hello ${i}`)
     }
+    this.state = {
+      items
+    }
+  }
+
+  reorderItems = items => {
+    this.setState({ items })
+  }
+
+  render() {
     return (
       <View style={s.container}>
         <Text style={s.text}>Text above the list</Text>
-        <List items={items}/>
+        <List items={this.state.items} onReorder={this.reorderItems}/>
       </View>
     )
   }

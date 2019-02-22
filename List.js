@@ -17,6 +17,7 @@ const s = StyleSheet.create({
 export default class List extends React.PureComponent {
   static propTypes = {
     items: PropTypes.array.isRequired,
+    onReorder: PropTypes.func.isRequired,
   }
 
   renderItem = ({ item, onLongPress, onPressOut }) => {
@@ -35,6 +36,7 @@ export default class List extends React.PureComponent {
           contentContainerStyle={s.list}
           items={this.props.items}
           keyExtractor={this.keyExtractor}
+          onReorder={this.props.onReorder}
           renderItem={this.renderItem}
         />
       </View>
