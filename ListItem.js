@@ -25,12 +25,13 @@ export default class ListItem extends React.PureComponent {
   static propTypes = {
     item: PropTypes.string.isRequired,
     onLongPress: PropTypes.func.isRequired,
+    onPressOut: PropTypes.func.isRequired,
   }
 
   render() {
-    const { item, onLongPress } = this.props
+    const { item, onLongPress, onPressOut } = this.props
     return (
-      <TouchableOpacity onLongPress={onLongPress}>
+      <TouchableOpacity onLongPress={onLongPress} onPressOut={onPressOut}>
         <View style={s.item}>
           <Text style={s.text}>{item}</Text>
         </View>

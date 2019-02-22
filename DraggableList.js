@@ -25,6 +25,7 @@ export default class DraggableList extends React.PureComponent {
     this.state = {
       dragComponent: undefined,
     }
+    this.dragging = false
     this.dragAnimation = new Animated.Value(0)
     this.panResponder = this.createPanResponder(props.cellSize)
   }
@@ -34,7 +35,16 @@ export default class DraggableList extends React.PureComponent {
       onStartShouldSetPanResponderCapture: (event) => {
         const { pageX } = event.nativeEvent
         this.dragAnimation.setValue(pageX - pageX % cellSize)
-      }
+        return false
+      },
+      onMoveShouldSetPanResponder: () => {
+        this.dragging = !!this.state.dragComponent
+        return this.dragging
+      },
+      onPanResponderRelease: () => {
+        this.setState({ dragComponent: undefined })
+        this.dragging = false
+      },
     })
   }
 
@@ -61,9 +71,13 @@ export default class DraggableList extends React.PureComponent {
     }
   }
 
+  onItemPressOut = () => {
+    if (!this.dragging) this.setState({ dragComponent: undefined })
+  }
+
   renderItem = ({ item }) => {
     const { renderItem } = this.props
-    return renderItem({ item, onLongPress: this.onItemLongPress(item) })
+    return renderItem({ item, onLongPress: this.onItemLongPress(item), onPressOut: this.onItemPressOut })
   }
 
   render() {
@@ -76,6 +90,7 @@ export default class DraggableList extends React.PureComponent {
           renderItem={this.renderItem}
           keyExtractor={keyExtractor}
           horizontal={true}
+          scrollEnabled={!this.state.dragComponent}
         />
         {this.renderDragComponent()}
       </View>

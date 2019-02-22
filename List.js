@@ -19,8 +19,8 @@ export default class List extends React.PureComponent {
     items: PropTypes.array.isRequired,
   }
 
-  renderItem = ({ item, onLongPress }) => {
-    return <ListItem item={item} onLongPress={onLongPress}/>
+  renderItem = ({ item, onLongPress, onPressOut }) => {
+    return <ListItem item={item} onLongPress={onLongPress} onPressOut={onPressOut}/>
   }
 
   keyExtractor = (item, index) => {
