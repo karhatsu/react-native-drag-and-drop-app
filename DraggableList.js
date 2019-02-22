@@ -26,7 +26,9 @@ export default class DraggableList extends React.PureComponent {
       dragComponent: undefined,
     }
     this.dragging = false
-    this.dragAnimation = new Animated.Value(0)
+    this.dragStart = new Animated.Value(0)
+    this.dragMove = new Animated.Value(0)
+    this.drag = Animated.add(this.dragStart, this.dragMove)
     this.panResponder = this.createPanResponder(props.cellSize)
   }
 
@@ -34,16 +36,21 @@ export default class DraggableList extends React.PureComponent {
     return PanResponder.create({
       onStartShouldSetPanResponderCapture: (event) => {
         const { pageX } = event.nativeEvent
-        this.dragAnimation.setValue(pageX - pageX % cellSize)
+        this.dragStart.setValue(pageX - pageX % cellSize)
         return false
       },
       onMoveShouldSetPanResponder: () => {
         this.dragging = !!this.state.dragComponent
         return this.dragging
       },
+      onPanResponderMove: (event, gestureState) => {
+        const { dx } = gestureState
+        this.dragMove.setValue(dx)
+      },
       onPanResponderRelease: () => {
         this.setState({ dragComponent: undefined })
         this.dragging = false
+        this.dragMove.setValue(0)
       },
     })
   }
@@ -51,7 +58,7 @@ export default class DraggableList extends React.PureComponent {
   resolveDragComponentContainerStyles = () => {
     return [
       s.dragComponentContainer,
-      { transform: [{ translateX: this.dragAnimation }] }
+      { transform: [{ translateX: this.drag }] }
     ]
   }
 
