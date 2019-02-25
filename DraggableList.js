@@ -10,6 +10,7 @@ const s = StyleSheet.create({
   },
 })
 
+const scaleDuration = 100
 const swapDuration = 300
 
 const scrollMargin = 50
@@ -20,6 +21,9 @@ const defaultDragState = {
   dragComponent: undefined,
   dragComponentStartIndex: noDraggingIndex,
 }
+
+const notDragging = 0
+const dragging = 1
 
 export default class DraggableList extends React.PureComponent {
   static propTypes = {
@@ -39,6 +43,7 @@ export default class DraggableList extends React.PureComponent {
     }
     this.scrollOffset = 0
     this.dragging = false
+    this.draggingAnimation = new Animated.Value(notDragging)
     this.dragStartComponentLeft = 0
     this.dragStart = new Animated.Value(0)
     this.dragMove = new Animated.Value(0)
@@ -124,7 +129,17 @@ export default class DraggableList extends React.PureComponent {
   resolveDragComponentContainerStyles = () => {
     return [
       s.dragComponentContainer,
-      { transform: [{ translateX: this.drag }] }
+      {
+        transform: [
+          { translateX: this.drag },
+          {
+            scale: this.draggingAnimation.interpolate({
+              inputRange: [notDragging, dragging],
+              outputRange: [1, 1.125],
+            }),
+          }
+        ]
+      }
     ]
   }
 
@@ -137,12 +152,22 @@ export default class DraggableList extends React.PureComponent {
     )
   }
 
+  animateDraggableScale = toValue => {
+    Animated.timing(this.draggingAnimation, {
+      toValue,
+      duration: scaleDuration,
+      useNativeDriver: true,
+      easing: Easing.linear,
+    }).start()
+  }
+
   onItemLongPress = (item, index) => {
     return () => {
       const dragComponent = this.props.renderItem({ item, index })
       this.targetIndex = index
       this.targetIndexAnimation.setValue(index)
       this.setState({ dragComponent, dragComponentStartIndex: index })
+      this.animateDraggableScale(dragging)
     }
   }
 
