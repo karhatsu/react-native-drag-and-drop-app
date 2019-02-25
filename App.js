@@ -1,5 +1,6 @@
 import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { Button, StyleSheet, Text, View } from 'react-native'
+import { ScreenOrientation } from 'expo'
 import List from './List'
 
 const itemsCount = 10
@@ -25,7 +26,8 @@ export default class App extends React.Component {
       items.push({ id: i, text: `Hello ${i}` })
     }
     this.state = {
-      items
+      items,
+      landscape: false,
     }
   }
 
@@ -34,11 +36,20 @@ export default class App extends React.Component {
   }
 
   render() {
+    const buttonTitle = this.state.landscape ? 'Portrait' : 'Landscape'
     return (
       <View style={s.container}>
+        <Button onPress={this.rotate} title={buttonTitle}/>
         <Text style={s.text}>Text above the list</Text>
         <List items={this.state.items} onReorder={this.reorderItems}/>
       </View>
     )
+  }
+
+  rotate = () => {
+    const { landscape } = this.state
+    const orientation = landscape ? ScreenOrientation.Orientation.PORTRAIT : ScreenOrientation.Orientation.LANDSCAPE
+    ScreenOrientation.allowAsync(orientation)
+    this.setState({ landscape: !landscape })
   }
 }
