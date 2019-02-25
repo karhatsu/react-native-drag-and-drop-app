@@ -57,9 +57,7 @@ export default class DraggableList extends React.PureComponent {
     this.dragModeAnimatedValue = new Animated.Value(dragAnimationValue.noDragging)
 
     this.dragStartComponentLeft = 0
-    this.dragStartAnimatedValue = new Animated.Value(0)
-    this.dragMoveAnimatedValue = new Animated.Value(0)
-    this.dragAnimatedValue = Animated.add(this.dragStartAnimatedValue, this.dragMoveAnimatedValue)
+    this.dragAnimatedValue = new Animated.Value(0)
 
     this.targetIndex = -2
     this.targetIndexAnimatedValue = new Animated.Value(this.targetIndex)
@@ -72,7 +70,7 @@ export default class DraggableList extends React.PureComponent {
       onStartShouldSetPanResponderCapture: (event) => {
         const { pageX } = event.nativeEvent
         this.dragStartComponentLeft = pageX - (pageX + this.scrollOffset) % cellSize
-        this.dragStartAnimatedValue.setValue(this.dragStartComponentLeft)
+        this.dragAnimatedValue.setOffset(this.dragStartComponentLeft)
         return false
       },
       onMoveShouldSetPanResponder: () => {
@@ -83,7 +81,7 @@ export default class DraggableList extends React.PureComponent {
         const { cellSize } = this.props
         const { pageX } = event.nativeEvent
         const { dx } = gestureState
-        this.dragMoveAnimatedValue.setValue(dx)
+        this.dragAnimatedValue.setValue(dx)
         const dragStartComponentMiddle = this.scrollOffset + this.dragStartComponentLeft + cellSize / 2
         const targetIndex = Math.floor((dragStartComponentMiddle + dx) / cellSize)
         if (targetIndex !== this.targetIndex) {
@@ -123,9 +121,9 @@ export default class DraggableList extends React.PureComponent {
     })
   }
 
-  createDropAnimation = (targetX) => {
-    return Animated.timing(this.dragMoveAnimatedValue, {
-      toValue: targetX,
+  createDropAnimation = (toValue) => {
+    return Animated.timing(this.dragAnimatedValue, {
+      toValue,
       duration: scaleDuration,
       useNativeDriver: true,
       easing: Easing.linear,
@@ -168,7 +166,7 @@ export default class DraggableList extends React.PureComponent {
     this.targetIndexAnimatedValue.setValue(this.targetIndex)
     this.isDragging = false
     this.isAutoScrolling = false
-    this.dragMoveAnimatedValue.setValue(0)
+    this.dragAnimatedValue.setValue(0)
     this.setState(defaultDragState)
   }
 
