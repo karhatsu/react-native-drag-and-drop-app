@@ -261,6 +261,7 @@ export default class DraggableList extends React.PureComponent {
           horizontal={true}
           onScroll={this.onListScroll}
           scrollEnabled={!this.state.dragComponent}
+          showsHorizontalScrollIndicator={false}
         />
         {this.renderDragComponent()}
       </View>
