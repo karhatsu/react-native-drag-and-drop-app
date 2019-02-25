@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Animated, FlatList, PanResponder, StyleSheet, View } from 'react-native'
+import { Animated, Easing, FlatList, PanResponder, StyleSheet, View } from 'react-native'
 
 const s = StyleSheet.create({
   dragComponentContainer: {
@@ -10,17 +10,15 @@ const s = StyleSheet.create({
   },
 })
 
-const left = -1
-const right = 1
+const swapDuration = 300
 
 const scrollMargin = 50
 const scrollPixels = 20
 
+const noDraggingIndex = -1
 const defaultDragState = {
   dragComponent: undefined,
-  dragComponentIndex: -1,
-  dragDirection: 0,
-  targetIndex: -1,
+  dragComponentStartIndex: noDraggingIndex,
 }
 
 export default class DraggableList extends React.PureComponent {
@@ -45,6 +43,8 @@ export default class DraggableList extends React.PureComponent {
     this.dragStart = new Animated.Value(0)
     this.dragMove = new Animated.Value(0)
     this.drag = Animated.add(this.dragStart, this.dragMove)
+    this.targetIndex = -2
+    this.targetIndexAnimation = new Animated.Value(this.targetIndex)
     this.panResponder = this.createPanResponder(props.cellSize)
   }
 
@@ -66,30 +66,34 @@ export default class DraggableList extends React.PureComponent {
         const { dx } = gestureState
         this.dragMove.setValue(dx)
         const dragStartComponentMiddle = this.scrollOffset + this.dragStartComponentLeft + cellSize / 2
-        const dragDirection = dx < 0 ? left : right
         const targetIndex = Math.floor((dragStartComponentMiddle + dx) / cellSize)
-        //console.log('middle', dragStartComponentMiddle, 'dx', dx, 'targetIndex', targetIndex)
-        if (targetIndex !== this.state.targetIndex || dragDirection !== this.state.dragDirection) {
-          //console.log('dragDirection:', this.state.dragDirection, '->', dragDirection)
-          //console.log('targetIndex:', this.state.targetIndex, '->', targetIndex)
-          this.setState({ dragDirection, targetIndex })
+        if (targetIndex !== this.targetIndex) {
+          this.animateSwap(targetIndex)
+          this.targetIndex = targetIndex
         }
         this.scrollOnEdge(pageX, targetIndex)
       },
       onPanResponderRelease: () => {
-        const { dragComponentIndex, targetIndex } = this.state
-        if (targetIndex !== dragComponentIndex) {
-          this.props.onReorder(this.reorderItems(dragComponentIndex, targetIndex))
+        const { dragComponentStartIndex } = this.state
+        if (this.targetIndex !== dragComponentStartIndex) {
+          this.props.onReorder(this.reorderItems(dragComponentStartIndex, this.targetIndex))
         }
-        this.setState(defaultDragState)
-        this.dragging = false
-        this.dragMove.setValue(0)
+        this.resetState()
       },
     })
   }
 
+  animateSwap = (targetIndex) => {
+    Animated.timing(this.targetIndexAnimation, {
+      toValue: targetIndex,
+      duration: swapDuration,
+      useNativeDriver: true,
+      easing: Easing.linear,
+    }).start()
+  }
+
   scrollOnEdge = (pageX, targetIndex) => {
-    if (targetIndex === -1) return
+    if (targetIndex <= 0) return
     if (targetIndex >= this.props.items.length) return this.flatList.scrollToEnd()
     let newScrollOffset = 0
     if (pageX < scrollMargin) {
@@ -107,6 +111,14 @@ export default class DraggableList extends React.PureComponent {
     const [item] = items.splice(fromIndex, 1)
     items.splice(toIndex, 0, item)
     return items
+  }
+
+  resetState = () => {
+    this.targetIndex = -2
+    this.targetIndexAnimation.setValue(this.targetIndex)
+    this.dragging = false
+    this.dragMove.setValue(0)
+    this.setState(defaultDragState)
   }
 
   resolveDragComponentContainerStyles = () => {
@@ -127,39 +139,50 @@ export default class DraggableList extends React.PureComponent {
 
   onItemLongPress = (item, index) => {
     return () => {
-      const dragComponent = this.renderItem({ item })
-      this.setState({ dragComponent, dragComponentIndex: index, targetIndex: index })
+      const dragComponent = this.props.renderItem({ item, index })
+      this.targetIndex = index
+      this.targetIndexAnimation.setValue(index)
+      this.setState({ dragComponent, dragComponentStartIndex: index })
     }
   }
 
   onItemPressOut = () => {
-    if (!this.dragging) this.setState(defaultDragState)
+    if (!this.dragging) this.resetState()
   }
 
-  renderPlaceholderItem = () => {
+  resolveItemAnimationStyles = (inputRange, outputRange) => {
+    return {
+      transform: [
+        {
+          translateX: this.targetIndexAnimation.interpolate({
+            inputRange,
+            outputRange,
+            extrapolate: 'clamp',
+          })
+        }
+      ]
+    }
+  }
+
+  resolveItemStyles = (index) => {
+    const { dragComponentStartIndex } = this.state
+    if (dragComponentStartIndex === noDraggingIndex) return undefined
     const { cellSize } = this.props
-    return <View style={{ width: cellSize, height: cellSize, borderWidth: 1, borderColor: 'red' }}/>
+    if (dragComponentStartIndex === index) {
+      return { opacity: 0 }
+    } else if (dragComponentStartIndex > index) {
+      return this.resolveItemAnimationStyles([index, index + 1], [cellSize, 0])
+    } else if (dragComponentStartIndex < index) {
+      return this.resolveItemAnimationStyles([index - 1, index], [0, -cellSize])
+    }
   }
 
   renderItem = ({ item, index }) => {
-    const { items, renderItem } = this.props
-    const { dragComponentIndex, dragDirection, targetIndex } = this.state
-    const hiddenStyle = dragComponentIndex === index ? { width: 0, overflow: 'hidden' } : undefined
-    let renderEmptySpaceToLeft = targetIndex !== -1 && targetIndex + 1 === index
-    let renderEmptySpaceToRight = targetIndex === index && index + 1 === items.length
-    if (dragDirection === left) {
-      renderEmptySpaceToLeft = targetIndex === 0 && index === 0
-      renderEmptySpaceToRight = targetIndex - 1 === index
-    }
-    //console.log('dragComponentIndex', dragComponentIndex, 'index', index, 'hiddenStyle', hiddenStyle, 'left', renderEmptySpaceToLeft, 'right', renderEmptySpaceToRight)
+    const { renderItem } = this.props
     return (
-      <View style={{ flexDirection: 'row' }}>
-        {renderEmptySpaceToLeft && this.renderPlaceholderItem()}
-        <View style={hiddenStyle}>
-          {renderItem({ item, onLongPress: this.onItemLongPress(item, index), onPressOut: this.onItemPressOut })}
-        </View>
-        {renderEmptySpaceToRight && this.renderPlaceholderItem()}
-      </View>
+      <Animated.View style={this.resolveItemStyles(index)}>
+        {renderItem({ item, onLongPress: this.onItemLongPress(item, index), onPressOut: this.onItemPressOut })}
+      </Animated.View>
     )
   }
 
@@ -172,6 +195,11 @@ export default class DraggableList extends React.PureComponent {
     this.setState({ containerWidth: width })
   }
 
+  getItemLayout = (data, index) => {
+    const { cellSize } = this.props
+    return { length: cellSize, offset: cellSize * index, index }
+  }
+
   render() {
     const { contentContainerStyle, items, keyExtractor } = this.props
     return (
@@ -181,6 +209,7 @@ export default class DraggableList extends React.PureComponent {
           contentContainerStyle={contentContainerStyle}
           data={items}
           extraData={this.state}
+          getItemLayout={this.getItemLayout}
           renderItem={this.renderItem}
           keyExtractor={keyExtractor}
           horizontal={true}

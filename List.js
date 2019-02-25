@@ -16,7 +16,9 @@ const s = StyleSheet.create({
 
 export default class List extends React.PureComponent {
   static propTypes = {
-    items: PropTypes.array.isRequired,
+    items: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.number.isRequired,
+    })).isRequired,
     onReorder: PropTypes.func.isRequired,
   }
 
@@ -24,8 +26,8 @@ export default class List extends React.PureComponent {
     return <ListItem item={item} onLongPress={onLongPress} onPressOut={onPressOut}/>
   }
 
-  keyExtractor = (item, index) => {
-    return `key-${index}`
+  keyExtractor = (item) => {
+    return `key-${item.id}`
   }
 
   render() {

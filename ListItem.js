@@ -23,17 +23,19 @@ const s = StyleSheet.create({
 
 export default class ListItem extends React.PureComponent {
   static propTypes = {
-    item: PropTypes.string.isRequired,
-    onLongPress: PropTypes.func.isRequired,
-    onPressOut: PropTypes.func.isRequired,
+    item: PropTypes.shape({
+      text: PropTypes.string.isRequired,
+    }).isRequired,
+    onLongPress: PropTypes.func,
+    onPressOut: PropTypes.func,
   }
 
   render() {
-    const { item, onLongPress, onPressOut } = this.props
+    const { item: { text }, onLongPress, onPressOut } = this.props
     return (
       <TouchableOpacity onLongPress={onLongPress} onPressOut={onPressOut}>
         <View style={s.item}>
-          <Text style={s.text}>{item}</Text>
+          <Text style={s.text}>{text}</Text>
         </View>
       </TouchableOpacity>
     )

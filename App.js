@@ -22,7 +22,7 @@ export default class App extends React.Component {
     super(props)
     let items = []
     for (let i = 0; i < itemsCount; i++) {
-      items.push(`Hello ${i}`)
+      items.push({ id: i, text: `Hello ${i}` })
     }
     this.state = {
       items
