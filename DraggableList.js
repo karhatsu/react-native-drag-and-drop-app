@@ -1,12 +1,18 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Animated, Easing, FlatList, PanResponder, StyleSheet, View } from 'react-native'
+import { Animated, Easing, FlatList, PanResponder, StyleSheet, Text, View } from 'react-native'
 
 const s = StyleSheet.create({
   dragComponentContainer: {
     position: 'absolute',
     top: 0,
     left: 0,
+  },
+  trash: {
+    backgroundColor: 'rgba(200, 10, 10, 0.6)',
+    position: 'absolute',
+    left: 0,
+    right: 0,
   },
 })
 
@@ -260,9 +266,12 @@ export default class DraggableList extends React.PureComponent {
   }
 
   render() {
-    const { contentContainerStyle, items, keyExtractor } = this.props
+    const { cellSize, contentContainerStyle, items, keyExtractor } = this.props
+    const trashOpacity = !!this.state.dragComponent ? 1 : 0
+    const trashPositionStyle = { top: -cellSize, bottom: cellSize, opacity: trashOpacity }
     return (
       <View {...this.panResponder.panHandlers} onLayout={this.onLayout}>
+        <View style={[s.trash, trashPositionStyle]}/>
         <FlatList
           ref={ref => this.flatList = ref}
           contentContainerStyle={contentContainerStyle}
