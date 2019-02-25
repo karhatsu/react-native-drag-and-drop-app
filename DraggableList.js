@@ -42,6 +42,7 @@ export default class DraggableList extends React.PureComponent {
       containerWidth: 0,
     }
     this.scrollOffset = 0
+    this.draggingStartScrollOffset = 0
     this.dragging = false
     this.draggingAnimation = new Animated.Value(notDragging)
     this.dragStartComponentLeft = 0
@@ -78,12 +79,20 @@ export default class DraggableList extends React.PureComponent {
         }
         this.scrollOnEdge(pageX, targetIndex)
       },
-      onPanResponderRelease: () => {
+      onPanResponderRelease: (event, gestureState) => {
         const { dragComponentStartIndex } = this.state
-        if (this.targetIndex !== dragComponentStartIndex) {
-          this.props.onReorder(this.reorderItems(dragComponentStartIndex, this.targetIndex))
-        }
-        this.resetState()
+        const moved = this.targetIndex - this.state.dragComponentStartIndex
+        const scrolledDuringDragging = this.scrollOffset - this.draggingStartScrollOffset
+        const targetX = moved * this.props.cellSize - scrolledDuringDragging
+        Animated.parallel([
+          this.createDraggableScaleAnimation(notDragging),
+          this.createDropAnimation(targetX)
+        ]).start(() => {
+          if (moved !== 0) {
+            this.props.onReorder(this.reorderItems(dragComponentStartIndex, this.targetIndex))
+          }
+          this.resetState()
+        })
       },
     })
   }
@@ -95,6 +104,15 @@ export default class DraggableList extends React.PureComponent {
       useNativeDriver: true,
       easing: Easing.linear,
     }).start()
+  }
+
+  createDropAnimation = (targetX) => {
+    return Animated.timing(this.dragMove, {
+      toValue: targetX,
+      duration: scaleDuration,
+      useNativeDriver: true,
+      easing: Easing.linear,
+    })
   }
 
   scrollOnEdge = (pageX, targetIndex) => {
@@ -152,13 +170,13 @@ export default class DraggableList extends React.PureComponent {
     )
   }
 
-  animateDraggableScale = toValue => {
-    Animated.timing(this.draggingAnimation, {
+  createDraggableScaleAnimation = (toValue, onFinish) => {
+    return Animated.timing(this.draggingAnimation, {
       toValue,
       duration: scaleDuration,
       useNativeDriver: true,
       easing: Easing.linear,
-    }).start()
+    })
   }
 
   onItemLongPress = (item, index) => {
@@ -166,13 +184,16 @@ export default class DraggableList extends React.PureComponent {
       const dragComponent = this.props.renderItem({ item, index })
       this.targetIndex = index
       this.targetIndexAnimation.setValue(index)
+      this.draggingStartScrollOffset = this.scrollOffset
       this.setState({ dragComponent, dragComponentStartIndex: index })
-      this.animateDraggableScale(dragging)
+      this.createDraggableScaleAnimation(dragging).start()
     }
   }
 
   onItemPressOut = () => {
-    if (!this.dragging) this.resetState()
+    if (!this.dragging) {
+      this.createDraggableScaleAnimation(notDragging).start(this.resetState)
+    }
   }
 
   resolveItemAnimationStyles = (inputRange, outputRange) => {
