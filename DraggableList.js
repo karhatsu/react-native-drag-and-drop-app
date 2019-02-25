@@ -45,6 +45,7 @@ export default class DraggableList extends React.PureComponent {
     }
     this.scrollOffset = 0
     this.draggingStartScrollOffset = 0
+    this.isAutoScrolling = false
 
     this.isDragging = false
     this.dragModeAnimatedValue = new Animated.Value(dragAnimationValue.noDragging)
@@ -83,7 +84,11 @@ export default class DraggableList extends React.PureComponent {
           this.createSwapAnimation(targetIndex).start()
           this.targetIndex = targetIndex
         }
-        this.scrollOnEdge(pageX, targetIndex)
+        this.isAutoScrollingPageX = pageX
+        if (!this.isAutoScrolling) {
+          this.isAutoScrolling = true
+          this.scrollOnEdge()
+        }
       },
       onPanResponderRelease: () => {
         const { dragComponentStartIndex } = this.state
@@ -130,17 +135,18 @@ export default class DraggableList extends React.PureComponent {
     })
   }
 
-  scrollOnEdge = (pageX, targetIndex) => {
-    if (targetIndex <= 0) return
-    if (targetIndex >= this.props.items.length) return this.flatList.scrollToEnd()
+  scrollOnEdge = () => {
     let newScrollOffset = 0
-    if (pageX < scrollMargin) {
+    if (this.isAutoScrollingPageX < scrollMargin) {
       newScrollOffset = Math.max(0, this.scrollOffset - scrollPixels)
-    } else if (pageX > this.state.containerWidth - scrollMargin) {
+    } else if (this.isAutoScrollingPageX > this.state.containerWidth - scrollMargin) {
       newScrollOffset = this.scrollOffset + scrollPixels
     }
     if (newScrollOffset) {
       this.flatList.scrollToOffset({ offset: newScrollOffset })
+      requestAnimationFrame(this.scrollOnEdge)
+    } else {
+      this.isAutoScrolling = false
     }
   }
 
@@ -155,6 +161,7 @@ export default class DraggableList extends React.PureComponent {
     this.targetIndex = -2
     this.targetIndexAnimatedValue.setValue(this.targetIndex)
     this.isDragging = false
+    this.isAutoScrolling = false
     this.dragMoveAnimatedValue.setValue(0)
     this.setState(defaultDragState)
   }
