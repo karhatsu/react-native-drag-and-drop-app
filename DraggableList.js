@@ -22,8 +22,10 @@ const defaultDragState = {
   dragComponentStartIndex: noDraggingIndex,
 }
 
-const notDragging = 0
-const dragging = 1
+const dragAnimationValue = {
+  noDragging: 0,
+  dragging: 1,
+}
 
 export default class DraggableList extends React.PureComponent {
   static propTypes = {
@@ -43,14 +45,18 @@ export default class DraggableList extends React.PureComponent {
     }
     this.scrollOffset = 0
     this.draggingStartScrollOffset = 0
-    this.dragging = false
-    this.draggingAnimation = new Animated.Value(notDragging)
+
+    this.isDragging = false
+    this.dragModeAnimatedValue = new Animated.Value(dragAnimationValue.noDragging)
+
     this.dragStartComponentLeft = 0
-    this.dragStart = new Animated.Value(0)
-    this.dragMove = new Animated.Value(0)
-    this.drag = Animated.add(this.dragStart, this.dragMove)
+    this.dragStartAnimatedValue = new Animated.Value(0)
+    this.dragMoveAnimatedValue = new Animated.Value(0)
+    this.dragAnimatedValue = Animated.add(this.dragStartAnimatedValue, this.dragMoveAnimatedValue)
+
     this.targetIndex = -2
-    this.targetIndexAnimation = new Animated.Value(this.targetIndex)
+    this.targetIndexAnimatedValue = new Animated.Value(this.targetIndex)
+
     this.panResponder = this.createPanResponder(props.cellSize)
   }
 
@@ -59,33 +65,33 @@ export default class DraggableList extends React.PureComponent {
       onStartShouldSetPanResponderCapture: (event) => {
         const { pageX } = event.nativeEvent
         this.dragStartComponentLeft = pageX - (pageX + this.scrollOffset) % cellSize
-        this.dragStart.setValue(this.dragStartComponentLeft)
+        this.dragStartAnimatedValue.setValue(this.dragStartComponentLeft)
         return false
       },
       onMoveShouldSetPanResponder: () => {
-        this.dragging = !!this.state.dragComponent
-        return this.dragging
+        this.isDragging = !!this.state.dragComponent
+        return this.isDragging
       },
       onPanResponderMove: (event, gestureState) => {
         const { cellSize } = this.props
         const { pageX } = event.nativeEvent
         const { dx } = gestureState
-        this.dragMove.setValue(dx)
+        this.dragMoveAnimatedValue.setValue(dx)
         const dragStartComponentMiddle = this.scrollOffset + this.dragStartComponentLeft + cellSize / 2
         const targetIndex = Math.floor((dragStartComponentMiddle + dx) / cellSize)
         if (targetIndex !== this.targetIndex) {
-          this.animateSwap(targetIndex)
+          this.createSwapAnimation(targetIndex).start()
           this.targetIndex = targetIndex
         }
         this.scrollOnEdge(pageX, targetIndex)
       },
-      onPanResponderRelease: (event, gestureState) => {
+      onPanResponderRelease: () => {
         const { dragComponentStartIndex } = this.state
         const moved = this.targetIndex - this.state.dragComponentStartIndex
         const scrolledDuringDragging = this.scrollOffset - this.draggingStartScrollOffset
         const targetX = moved * this.props.cellSize - scrolledDuringDragging
         Animated.parallel([
-          this.createDraggableScaleAnimation(notDragging),
+          this.createDraggableScaleAnimation(dragAnimationValue.noDragging),
           this.createDropAnimation(targetX)
         ]).start(() => {
           if (moved !== 0) {
@@ -97,18 +103,27 @@ export default class DraggableList extends React.PureComponent {
     })
   }
 
-  animateSwap = (targetIndex) => {
-    Animated.timing(this.targetIndexAnimation, {
+  createSwapAnimation = (targetIndex) => {
+    return Animated.timing(this.targetIndexAnimatedValue, {
       toValue: targetIndex,
       duration: swapDuration,
       useNativeDriver: true,
       easing: Easing.linear,
-    }).start()
+    })
   }
 
   createDropAnimation = (targetX) => {
-    return Animated.timing(this.dragMove, {
+    return Animated.timing(this.dragMoveAnimatedValue, {
       toValue: targetX,
+      duration: scaleDuration,
+      useNativeDriver: true,
+      easing: Easing.linear,
+    })
+  }
+
+  createDraggableScaleAnimation = (toValue) => {
+    return Animated.timing(this.dragModeAnimatedValue, {
+      toValue,
       duration: scaleDuration,
       useNativeDriver: true,
       easing: Easing.linear,
@@ -138,9 +153,9 @@ export default class DraggableList extends React.PureComponent {
 
   resetState = () => {
     this.targetIndex = -2
-    this.targetIndexAnimation.setValue(this.targetIndex)
-    this.dragging = false
-    this.dragMove.setValue(0)
+    this.targetIndexAnimatedValue.setValue(this.targetIndex)
+    this.isDragging = false
+    this.dragMoveAnimatedValue.setValue(0)
     this.setState(defaultDragState)
   }
 
@@ -149,10 +164,10 @@ export default class DraggableList extends React.PureComponent {
       s.dragComponentContainer,
       {
         transform: [
-          { translateX: this.drag },
+          { translateX: this.dragAnimatedValue },
           {
-            scale: this.draggingAnimation.interpolate({
-              inputRange: [notDragging, dragging],
+            scale: this.dragModeAnimatedValue.interpolate({
+              inputRange: [dragAnimationValue.noDragging, dragAnimationValue.dragging],
               outputRange: [1, 1.125],
             }),
           }
@@ -170,29 +185,20 @@ export default class DraggableList extends React.PureComponent {
     )
   }
 
-  createDraggableScaleAnimation = (toValue, onFinish) => {
-    return Animated.timing(this.draggingAnimation, {
-      toValue,
-      duration: scaleDuration,
-      useNativeDriver: true,
-      easing: Easing.linear,
-    })
-  }
-
   onItemLongPress = (item, index) => {
     return () => {
       const dragComponent = this.props.renderItem({ item, index })
       this.targetIndex = index
-      this.targetIndexAnimation.setValue(index)
+      this.targetIndexAnimatedValue.setValue(index)
       this.draggingStartScrollOffset = this.scrollOffset
       this.setState({ dragComponent, dragComponentStartIndex: index })
-      this.createDraggableScaleAnimation(dragging).start()
+      this.createDraggableScaleAnimation(dragAnimationValue.dragging).start()
     }
   }
 
   onItemPressOut = () => {
-    if (!this.dragging) {
-      this.createDraggableScaleAnimation(notDragging).start(this.resetState)
+    if (!this.isDragging) {
+      this.createDraggableScaleAnimation(dragAnimationValue.noDragging).start(this.resetState)
     }
   }
 
@@ -200,7 +206,7 @@ export default class DraggableList extends React.PureComponent {
     return {
       transform: [
         {
-          translateX: this.targetIndexAnimation.interpolate({
+          translateX: this.targetIndexAnimatedValue.interpolate({
             inputRange,
             outputRange,
             extrapolate: 'clamp',
@@ -256,10 +262,10 @@ export default class DraggableList extends React.PureComponent {
           data={items}
           extraData={this.state}
           getItemLayout={this.getItemLayout}
-          renderItem={this.renderItem}
-          keyExtractor={keyExtractor}
           horizontal={true}
+          keyExtractor={keyExtractor}
           onScroll={this.onListScroll}
+          renderItem={this.renderItem}
           scrollEnabled={!this.state.dragComponent}
           showsHorizontalScrollIndicator={false}
         />
