@@ -63,6 +63,7 @@ export default class DraggableList extends React.PureComponent {
       ...defaultDragState,
       containerWidth: 0,
     }
+    this.mounted = true
     this.scrollOffset = 0
     this.draggingStartScrollOffset = 0
     this.isAutoScrolling = false
@@ -81,6 +82,10 @@ export default class DraggableList extends React.PureComponent {
     this.targetIndexAnimatedValue = new Animated.Value(this.targetIndex)
 
     this.panResponder = this.createPanResponder()
+  }
+
+  componentWillUnmount() {
+    this.mounted = false
   }
 
   createPanResponder = () => {
@@ -223,7 +228,9 @@ export default class DraggableList extends React.PureComponent {
     this.dragAnimatedValue.setValue({ x: 0, y: 0 })
     this.trashMode = trashModes.hidden
     this.trashModeAnimatedValue.setValue(this.trashMode)
-    this.setState(defaultDragState)
+    if (this.mounted) {
+      this.setState(defaultDragState)
+    }
   }
 
   resolveDragComponentContainerStyles = () => {

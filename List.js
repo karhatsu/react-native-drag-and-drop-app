@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Button, StyleSheet, View } from 'react-native'
+import { Button, StyleSheet, View, Text } from 'react-native'
 import DraggableList from './DraggableList'
 import ListItem, { cellMargin, cellHeight } from './ListItem'
 
@@ -73,25 +73,30 @@ export default class List extends React.PureComponent {
 
   render() {
     const { canDeleteLast, extraItem, itemWidth, reorderEnabled } = this.props
+    const { items } = this.state
     const cellTotalSize = {
       height: cellHeight + 2 * cellMargin,
       width: itemWidth + 2 * cellMargin
     }
+    const hasItems = items.length > 0
     return (
       <View style={s.root}>
         <Button onPress={this.resetData} title="Reset data"/>
-        <DraggableList
-          canDeleteLast={canDeleteLast}
-          cellTotalSize={cellTotalSize}
-          contentContainerHorizontalPadding={containerHorizontalPadding}
-          contentContainerStyle={s.list}
-          onDeleteItem={this.onDeleteItem}
-          extraItem={extraItem ? { extra: true, text: '➕' } : undefined}
-          items={this.state.items}
-          keyExtractor={this.keyExtractor}
-          onReorder={reorderEnabled ? this.reorderItems : undefined}
-          renderItem={this.renderItem}
-        />
+        {hasItems && 
+          <DraggableList
+            canDeleteLast={canDeleteLast}
+            cellTotalSize={cellTotalSize}
+            contentContainerHorizontalPadding={containerHorizontalPadding}
+            contentContainerStyle={s.list}
+            onDeleteItem={this.onDeleteItem}
+            extraItem={extraItem ? { extra: true, text: '➕' } : undefined}
+            items={items}
+            keyExtractor={this.keyExtractor}
+            onReorder={reorderEnabled ? this.reorderItems : undefined}
+            renderItem={this.renderItem}
+          />
+        }
+        {!hasItems && <Text>Nothing left.</Text>}
       </View>
     )
   }

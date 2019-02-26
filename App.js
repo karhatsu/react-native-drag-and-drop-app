@@ -23,7 +23,7 @@ export default class App extends React.Component {
         <List
           canDeleteLast={true}
           extraItem={false}
-          itemsCount={20}
+          itemsCount={2}
           itemText="Long one"
           itemWidth={cellHeight * 1.5}
           reorderEnabled={false}
