@@ -7,6 +7,7 @@ import ListItem, { cellMargin, cellHeight } from './ListItem'
 const s = StyleSheet.create({
   root: {
     height: cellHeight + 2 * cellMargin,
+    width: '100%',
     marginVertical: 30,
   },
   list: {
