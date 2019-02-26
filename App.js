@@ -21,12 +21,8 @@ const s = StyleSheet.create({
 export default class App extends React.Component {
   constructor(props) {
     super(props)
-    let items = []
-    for (let i = 0; i < itemsCount; i++) {
-      items.push({ id: i, text: `Hello ${i}` })
-    }
     this.state = {
-      items,
+      items: this.initItems(),
       landscape: false,
     }
   }
@@ -39,11 +35,24 @@ export default class App extends React.Component {
     const buttonTitle = this.state.landscape ? 'Portrait' : 'Landscape'
     return (
       <View style={s.container}>
+        <Button onPress={this.resetData} title="Reset data"/>
         <Button onPress={this.rotate} title={buttonTitle}/>
         <Text style={s.text}>Text above the list</Text>
         <List items={this.state.items} onReorder={this.reorderItems}/>
       </View>
     )
+  }
+
+  resetData = () => {
+    this.setState({ items: this.initItems() })
+  }
+
+  initItems = () => {
+    const items = []
+    for (let i = 0; i < itemsCount; i++) {
+      items.push({ id: i, text: `Hello ${i}` })
+    }
+    return items
   }
 
   rotate = () => {
