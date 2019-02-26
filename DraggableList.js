@@ -54,6 +54,7 @@ export default class DraggableList extends React.PureComponent {
     }).isRequired,
     contentContainerStyle: PropTypes.object,
     deleteItem: PropTypes.func.isRequired,
+    extraItemIndex: PropTypes.number,
     items: PropTypes.array.isRequired,
     keyExtractor: PropTypes.func.isRequired,
     onReorder: PropTypes.func,
@@ -126,13 +127,14 @@ export default class DraggableList extends React.PureComponent {
   }
 
   resolveTargetIndex = (dx) => {
-    const { cellTotalSize, items, onReorder } = this.props
+    const { cellTotalSize, extraItemIndex, items, onReorder } = this.props
     const { dragComponentStartIndex } = this.state
     if (this.trashMode === trashModes.active) {
       return items.length
     } else if (onReorder) {
       const dragStartComponentMiddle = this.scrollOffset + this.dragStartComponentLeft + cellTotalSize.width / 2
-      return Math.floor((dragStartComponentMiddle + dx) / cellTotalSize.width)
+      const targetIndex = Math.floor((dragStartComponentMiddle + dx) / cellTotalSize.width)
+      return targetIndex >= extraItemIndex ? extraItemIndex - 1 : targetIndex
     } else {
       return dragComponentStartIndex
     }
@@ -323,10 +325,12 @@ export default class DraggableList extends React.PureComponent {
   }
 
   renderItem = ({ item, index }) => {
-    const { renderItem } = this.props
+    const { extraItemIndex, renderItem } = this.props
+    const onLongPress = index === extraItemIndex ? undefined : this.onItemLongPress(item, index)
+    const onPressOut = index === extraItemIndex ? undefined : this.onItemPressOut
     return (
       <Animated.View style={this.resolveItemStyles(index)}>
-        {renderItem({ item, onLongPress: this.onItemLongPress(item, index), onPressOut: this.onItemPressOut })}
+        {renderItem({ item, onLongPress, onPressOut })}
       </Animated.View>
     )
   }

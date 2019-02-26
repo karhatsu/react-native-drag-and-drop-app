@@ -16,6 +16,7 @@ const s = StyleSheet.create({
 
 export default class List extends React.PureComponent {
   static propTypes = {
+    extraItem: PropTypes.bool.isRequired,
     itemsCount: PropTypes.number.isRequired,
     itemText: PropTypes.string.isRequired,
     itemWidth: PropTypes.number.isRequired,
@@ -52,16 +53,19 @@ export default class List extends React.PureComponent {
   }
 
   initItems = () => {
-    const { itemsCount, itemText } = this.props
+    const { extraItem, itemsCount, itemText } = this.props
     const items = []
     for (let i = 0; i < itemsCount; i++) {
       items.push({ id: i, text: `${itemText} ${i}` })
+    }
+    if (extraItem) {
+      items.push({ id: itemsCount, text: '➕' })
     }
     return items
   }
 
   render() {
-    const { itemWidth, reorderEnabled } = this.props
+    const { extraItem, itemWidth, reorderEnabled } = this.props
     const cellTotalSize = {
       height: cellHeight + 2 * cellMargin,
       width: itemWidth + 2 * cellMargin
@@ -73,6 +77,7 @@ export default class List extends React.PureComponent {
           cellTotalSize={cellTotalSize}
           contentContainerStyle={s.list}
           deleteItem={this.deleteItem}
+          extraItemIndex={extraItem ? this.state.items.length - 1 : undefined}
           items={this.state.items}
           keyExtractor={this.keyExtractor}
           onReorder={reorderEnabled ? this.reorderItems : undefined}
