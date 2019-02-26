@@ -8,12 +8,6 @@ const s = StyleSheet.create({
     top: 0,
     left: 0,
   },
-  trash: {
-    backgroundColor: 'rgba(200, 10, 10, 0.6)',
-    position: 'absolute',
-    left: 0,
-    right: 0,
-  },
   trashIcon: {
     position: 'absolute',
     top: -5,
@@ -345,19 +339,6 @@ export default class DraggableList extends React.PureComponent {
     return { length: width, offset: width * index, index }
   }
 
-  resolveTrashStyles = () => {
-    const { cellTotalSize: { height } } = this.props
-    const { hidden, available, active } = trashModes
-    return {
-      top: -height,
-      bottom: height,
-      opacity: this.trashModeAnimatedValue.interpolate({
-        inputRange: [hidden, available, active],
-        outputRange: [0, 0.5, 1],
-      })
-    }
-  }
-
   render() {
     const { contentContainerStyle, extraItem, items, keyExtractor } = this.props
     let allItems = [...items]
@@ -366,7 +347,6 @@ export default class DraggableList extends React.PureComponent {
     }
     return (
       <View {...this.panResponder.panHandlers} onLayout={this.onLayout}>
-        <Animated.View style={[s.trash, this.resolveTrashStyles()]}/>
         <FlatList
           ref={ref => this.flatList = ref}
           contentContainerStyle={contentContainerStyle}
