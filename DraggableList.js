@@ -14,6 +14,11 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
   },
+  trashIcon: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+  },
 })
 
 const scaleDuration = 100
@@ -234,10 +239,24 @@ export default class DraggableList extends React.PureComponent {
     ]
   }
 
+  resolveTrashIconStyles = () => {
+    const { available, active } = trashModes
+    return [
+      s.trashIcon,
+      {
+        opacity: this.trashModeAnimatedValue.interpolate({
+          inputRange: [available, active],
+          outputRange: [0, 1],
+        })
+      }
+    ]
+  }
+
   renderDragComponent = () => {
     const { dragComponent } = this.state
     return !!dragComponent && (
       <Animated.View style={this.resolveDragComponentContainerStyles()}>
+        <Animated.View style={this.resolveTrashIconStyles()}><Text>🗑</Text></Animated.View>
         {dragComponent}
       </Animated.View>
     )
