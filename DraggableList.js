@@ -23,7 +23,6 @@ const s = StyleSheet.create({
 
 const scaleDuration = 100
 const swapDuration = 300
-const trashDropDuration = 200
 
 const scrollMargin = 50
 const scrollPixels = 20
@@ -143,7 +142,7 @@ export default class DraggableList extends React.PureComponent {
   deleteItem = () => {
     this.createDraggableScaleAnimation(dragAnimationValue.destroyed).start(() => {
       this.props.deleteItem(this.state.dragComponentStartIndex)
-      this.createTrashModeAnimation(trashModes.hidden).start(this.resetState)
+      this.resetState()
     })
   }
 
@@ -185,15 +184,6 @@ export default class DraggableList extends React.PureComponent {
     return Animated.timing(this.dragModeAnimatedValue, {
       toValue,
       duration: scaleDuration,
-      useNativeDriver: true,
-      easing: Easing.linear,
-    })
-  }
-
-  createTrashModeAnimation = toValue => {
-    return Animated.timing(this.trashModeAnimatedValue, {
-      toValue,
-      duration: trashDropDuration,
       useNativeDriver: true,
       easing: Easing.linear,
     })
