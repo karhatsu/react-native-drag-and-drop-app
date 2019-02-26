@@ -1,12 +1,12 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { StyleSheet, View } from 'react-native'
+import { Button, StyleSheet, View } from 'react-native'
 import DraggableList from './DraggableList'
-import ListItem, { cellMargin, cellSize } from './ListItem'
+import ListItem, { cellMargin, cellHeight } from './ListItem'
 
 const s = StyleSheet.create({
   root: {
-    height: cellSize + 2 * cellMargin,
+    height: cellHeight + 2 * cellMargin,
     marginVertical: 30,
   },
   list: {
@@ -16,31 +16,65 @@ const s = StyleSheet.create({
 
 export default class List extends React.PureComponent {
   static propTypes = {
-    deleteItem: PropTypes.func.isRequired,
-    items: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.number.isRequired,
-    })).isRequired,
-    onReorder: PropTypes.func.isRequired,
+    itemsCount: PropTypes.number.isRequired,
+    itemText: PropTypes.string.isRequired,
+    itemWidth: PropTypes.number.isRequired,
+  }
+
+  constructor(props) {
+    super(props)
+    this.state = {
+      items: this.initItems(),
+    }
   }
 
   renderItem = ({ item, onLongPress, onPressOut }) => {
-    return <ListItem item={item} onLongPress={onLongPress} onPressOut={onPressOut}/>
+    return <ListItem item={item} onLongPress={onLongPress} onPressOut={onPressOut} width={this.props.itemWidth}/>
   }
 
   keyExtractor = (item) => {
     return `key-${item.id}`
   }
 
+  reorderItems = items => {
+    this.setState({ items })
+  }
+
+  deleteItem = index => {
+    const { items } = this.state
+    items.splice(index, 1)
+    this.setState({ items })
+  }
+
+  resetData = () => {
+    this.setState({ items: this.initItems() })
+  }
+
+  initItems = () => {
+    const { itemsCount, itemText } = this.props
+    const items = []
+    for (let i = 0; i < itemsCount; i++) {
+      items.push({ id: i, text: `${itemText} ${i}` })
+    }
+    return items
+  }
+
   render() {
+    const { itemWidth } = this.props
+    const cellTotalSize = {
+      height: cellHeight + 2 * cellMargin,
+      width: itemWidth + 2 * cellMargin
+    }
     return (
       <View style={s.root}>
+        <Button onPress={this.resetData} title="Reset data"/>
         <DraggableList
-          cellSize={cellSize + 2 * cellMargin}
+          cellTotalSize={cellTotalSize}
           contentContainerStyle={s.list}
-          deleteItem={this.props.deleteItem}
-          items={this.props.items}
+          deleteItem={this.deleteItem}
+          items={this.state.items}
           keyExtractor={this.keyExtractor}
-          onReorder={this.props.onReorder}
+          onReorder={this.reorderItems}
           renderItem={this.renderItem}
         />
       </View>

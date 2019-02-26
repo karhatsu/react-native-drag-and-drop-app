@@ -48,7 +48,10 @@ const dragAnimationValue = {
 
 export default class DraggableList extends React.PureComponent {
   static propTypes = {
-    cellSize: PropTypes.number.isRequired,
+    cellTotalSize: PropTypes.shape({
+      height: PropTypes.number.isRequired,
+      width: PropTypes.number.isRequired,
+    }).isRequired,
     contentContainerStyle: PropTypes.object,
     deleteItem: PropTypes.func.isRequired,
     items: PropTypes.array.isRequired,
@@ -79,14 +82,14 @@ export default class DraggableList extends React.PureComponent {
     this.targetIndex = -2
     this.targetIndexAnimatedValue = new Animated.Value(this.targetIndex)
 
-    this.panResponder = this.createPanResponder(props.cellSize)
+    this.panResponder = this.createPanResponder(props.cellTotalSize)
   }
 
-  createPanResponder = (cellSize) => {
+  createPanResponder = (cellTotalSize) => {
     return PanResponder.create({
       onStartShouldSetPanResponderCapture: (event) => {
         const { pageX } = event.nativeEvent
-        this.dragStartComponentLeft = pageX - (pageX + this.scrollOffset) % cellSize
+        this.dragStartComponentLeft = pageX - (pageX + this.scrollOffset) % cellTotalSize.width
         this.dragAnimatedValue.setOffset({ x: this.dragStartComponentLeft, y: 0 })
         return false
       },
@@ -95,13 +98,13 @@ export default class DraggableList extends React.PureComponent {
         return this.isDragging
       },
       onPanResponderMove: (event, gestureState) => {
-        const { cellSize, items } = this.props
+        const { cellTotalSize, items } = this.props
         const { pageX } = event.nativeEvent
         const { dx, dy } = gestureState
         this.dragAnimatedValue.setValue({ x: dx, y: dy })
-        this.trashMode = dy < -cellSize / 2 ? trashModes.active : trashModes.available
-        const dragStartComponentMiddle = this.scrollOffset + this.dragStartComponentLeft + cellSize / 2
-        const targetIndex = this.trashMode === trashModes.active ? items.length : Math.floor((dragStartComponentMiddle + dx) / cellSize)
+        this.trashMode = dy < -cellTotalSize.height / 2 ? trashModes.active : trashModes.available
+        const dragStartComponentMiddle = this.scrollOffset + this.dragStartComponentLeft + cellTotalSize.width / 2
+        const targetIndex = this.trashMode === trashModes.active ? items.length : Math.floor((dragStartComponentMiddle + dx) / cellTotalSize.width)
         this.trashModeAnimatedValue.setValue(this.trashMode)
         if (targetIndex !== this.targetIndex) {
           this.createSwapAnimation(targetIndex).start()
@@ -134,7 +137,7 @@ export default class DraggableList extends React.PureComponent {
     const { dragComponentStartIndex } = this.state
     const moved = this.targetIndex - this.state.dragComponentStartIndex
     const scrolledDuringDragging = this.scrollOffset - this.draggingStartScrollOffset
-    const targetX = moved * this.props.cellSize - scrolledDuringDragging
+    const targetX = moved * this.props.cellTotalSize.width - scrolledDuringDragging
     Animated.parallel([
       this.createDraggableScaleAnimation(dragAnimationValue.noDragging),
       this.createDropAnimation({ x: targetX, y: 0 })
@@ -297,13 +300,13 @@ export default class DraggableList extends React.PureComponent {
   resolveItemStyles = (index) => {
     const { dragComponentStartIndex } = this.state
     if (dragComponentStartIndex === noDraggingIndex) return undefined
-    const { cellSize } = this.props
+    const { cellTotalSize } = this.props
     if (dragComponentStartIndex === index) {
       return { opacity: 0 }
     } else if (dragComponentStartIndex > index) {
-      return this.resolveItemAnimationStyles([index, index + 1], [cellSize, 0])
+      return this.resolveItemAnimationStyles([index, index + 1], [cellTotalSize.width, 0])
     } else if (dragComponentStartIndex < index) {
-      return this.resolveItemAnimationStyles([index - 1, index], [0, -cellSize])
+      return this.resolveItemAnimationStyles([index - 1, index], [0, -cellTotalSize.width])
     }
   }
 
@@ -326,16 +329,16 @@ export default class DraggableList extends React.PureComponent {
   }
 
   getItemLayout = (data, index) => {
-    const { cellSize } = this.props
-    return { length: cellSize, offset: cellSize * index, index }
+    const { cellTotalSize: { width } } = this.props
+    return { length: width, offset: width * index, index }
   }
 
   resolveTrashStyles = () => {
-    const { cellSize } = this.props
+    const { cellTotalSize: { height } } = this.props
     const { hidden, available, active } = trashModes
     return {
-      top: -cellSize,
-      bottom: cellSize,
+      top: -height,
+      bottom: height,
       opacity: this.trashModeAnimatedValue.interpolate({
         inputRange: [hidden, available, active],
         outputRange: [0, 0.5, 1],

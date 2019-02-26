@@ -1,8 +1,7 @@
 import React from 'react'
-import { Button, StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 import List from './List'
-
-const itemsCount = 10
+import { cellHeight } from "./ListItem"
 
 const s = StyleSheet.create({
   container: {
@@ -18,42 +17,13 @@ const s = StyleSheet.create({
 })
 
 export default class App extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      items: this.initItems(),
-    }
-  }
-
-  reorderItems = items => {
-    this.setState({ items })
-  }
-
-  deleteItem = index => {
-    const { items } = this.state
-    items.splice(index, 1)
-    this.setState({ items })
-  }
-
   render() {
     return (
       <View style={s.container}>
-        <Button onPress={this.resetData} title="Reset data"/>
+        <List itemsCount={20} itemText="Long one" itemWidth={cellHeight * 1.5}/>
         <Text style={s.text}>Text above the list</Text>
-        <List deleteItem={this.deleteItem} items={this.state.items} onReorder={this.reorderItems}/>
+        <List itemsCount={10} itemText="Short" itemWidth={cellHeight}/>
       </View>
     )
-  }
-
-  resetData = () => {
-    this.setState({ items: this.initItems() })
-  }
-
-  initItems = () => {
-    const items = []
-    for (let i = 0; i < itemsCount; i++) {
-      items.push({ id: i, text: `Hello ${i}` })
-    }
-    return items
   }
 }

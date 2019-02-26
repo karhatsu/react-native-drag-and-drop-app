@@ -2,13 +2,12 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
 
-export const cellSize = 80
+export const cellHeight = 80
 export const cellMargin = 8
 
 const s = StyleSheet.create({
   item: {
-    width: cellSize,
-    height: cellSize,
+    height: cellHeight,
     backgroundColor: '#99f',
     borderWidth: 1,
     borderColor: 'gray',
@@ -28,13 +27,14 @@ export default class ListItem extends React.PureComponent {
     }).isRequired,
     onLongPress: PropTypes.func,
     onPressOut: PropTypes.func,
+    width: PropTypes.number.isRequired,
   }
 
   render() {
-    const { item: { text }, onLongPress, onPressOut } = this.props
+    const { item: { text }, onLongPress, onPressOut, width } = this.props
     return (
       <TouchableOpacity onLongPress={onLongPress} onPressOut={onPressOut}>
-        <View style={s.item}>
+        <View style={[s.item, { width }]}>
           <Text style={s.text}>{text}</Text>
         </View>
       </TouchableOpacity>
