@@ -43,7 +43,7 @@ export default class List extends React.PureComponent {
   }
 
   deleteItem = index => {
-    const { items } = this.state
+    const items = [...this.state.items]
     items.splice(index, 1)
     this.setState({ items })
   }
