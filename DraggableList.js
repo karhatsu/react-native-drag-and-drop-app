@@ -56,7 +56,7 @@ export default class DraggableList extends React.PureComponent {
     deleteItem: PropTypes.func.isRequired,
     items: PropTypes.array.isRequired,
     keyExtractor: PropTypes.func.isRequired,
-    onReorder: PropTypes.func.isRequired,
+    onReorder: PropTypes.func,
     renderItem: PropTypes.func.isRequired,
   }
 
@@ -98,20 +98,19 @@ export default class DraggableList extends React.PureComponent {
         return this.isDragging
       },
       onPanResponderMove: (event, gestureState) => {
-        const { cellTotalSize, items } = this.props
+        const { cellTotalSize, onReorder } = this.props
         const { pageX } = event.nativeEvent
         const { dx, dy } = gestureState
         this.dragAnimatedValue.setValue({ x: dx, y: dy })
         this.trashMode = dy < -cellTotalSize.height / 2 ? trashModes.active : trashModes.available
-        const dragStartComponentMiddle = this.scrollOffset + this.dragStartComponentLeft + cellTotalSize.width / 2
-        const targetIndex = this.trashMode === trashModes.active ? items.length : Math.floor((dragStartComponentMiddle + dx) / cellTotalSize.width)
+        const targetIndex = this.resolveTargetIndex(dx)
         this.trashModeAnimatedValue.setValue(this.trashMode)
         if (targetIndex !== this.targetIndex) {
           this.createSwapAnimation(targetIndex).start()
           this.targetIndex = targetIndex
         }
         this.isAutoScrollingPageX = pageX
-        if (!this.isAutoScrolling) {
+        if (!this.isAutoScrolling && onReorder) {
           this.isAutoScrolling = true
           this.scrollOnEdge()
         }
@@ -124,6 +123,19 @@ export default class DraggableList extends React.PureComponent {
         }
       },
     })
+  }
+
+  resolveTargetIndex = (dx) => {
+    const { cellTotalSize, items, onReorder } = this.props
+    const { dragComponentStartIndex } = this.state
+    if (this.trashMode === trashModes.active) {
+      return items.length
+    } else if (onReorder) {
+      const dragStartComponentMiddle = this.scrollOffset + this.dragStartComponentLeft + cellTotalSize.width / 2
+      return Math.floor((dragStartComponentMiddle + dx) / cellTotalSize.width)
+    } else {
+      return dragComponentStartIndex
+    }
   }
 
   deleteItem = () => {

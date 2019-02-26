@@ -20,9 +20,9 @@ export default class App extends React.Component {
   render() {
     return (
       <View style={s.container}>
-        <List itemsCount={20} itemText="Long one" itemWidth={cellHeight * 1.5}/>
+        <List itemsCount={20} itemText="Long one" itemWidth={cellHeight * 1.5} reorderEnabled={false}/>
         <Text style={s.text}>Text above the list</Text>
-        <List itemsCount={10} itemText="Short" itemWidth={cellHeight}/>
+        <List itemsCount={10} itemText="Short" itemWidth={cellHeight} reorderEnabled={true}/>
       </View>
     )
   }

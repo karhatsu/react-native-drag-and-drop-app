@@ -19,6 +19,7 @@ export default class List extends React.PureComponent {
     itemsCount: PropTypes.number.isRequired,
     itemText: PropTypes.string.isRequired,
     itemWidth: PropTypes.number.isRequired,
+    reorderEnabled: PropTypes.bool.isRequired,
   }
 
   constructor(props) {
@@ -60,7 +61,7 @@ export default class List extends React.PureComponent {
   }
 
   render() {
-    const { itemWidth } = this.props
+    const { itemWidth, reorderEnabled } = this.props
     const cellTotalSize = {
       height: cellHeight + 2 * cellMargin,
       width: itemWidth + 2 * cellMargin
@@ -74,7 +75,7 @@ export default class List extends React.PureComponent {
           deleteItem={this.deleteItem}
           items={this.state.items}
           keyExtractor={this.keyExtractor}
-          onReorder={this.reorderItems}
+          onReorder={reorderEnabled ? this.reorderItems : undefined}
           renderItem={this.renderItem}
         />
       </View>
