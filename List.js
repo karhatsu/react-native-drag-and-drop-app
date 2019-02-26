@@ -48,8 +48,9 @@ export default class List extends React.PureComponent {
     this.setState({ items })
   }
 
-  onDeleteItem = index => {
+  onDeleteItem = deleteItem => {
     const items = [...this.state.items]
+    const index = items.findIndex(item => item.id === deleteItem.id)
     items.splice(index, 1)
     this.setState({ items })
   }

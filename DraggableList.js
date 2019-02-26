@@ -46,11 +46,12 @@ export default class DraggableList extends React.PureComponent {
       height: PropTypes.number.isRequired,
       width: PropTypes.number.isRequired,
     }).isRequired,
-    contentContainerStyle: PropTypes.object,
+    contentContainerStyle: PropTypes.object, // eslint-disable-line react/forbid-prop-types
     onDeleteItem: PropTypes.func.isRequired,
-    extraItem: PropTypes.object,
-    items: PropTypes.array.isRequired,
+    extraItem: PropTypes.object, // eslint-disable-line react/forbid-prop-types
+    items: PropTypes.array.isRequired, // eslint-disable-line react/forbid-prop-types
     keyExtractor: PropTypes.func.isRequired,
+    listExtraData: PropTypes.object, // eslint-disable-line react/forbid-prop-types
     onReorder: PropTypes.func,
     renderItem: PropTypes.func.isRequired,
   }
@@ -64,6 +65,7 @@ export default class DraggableList extends React.PureComponent {
     this.scrollOffset = 0
     this.draggingStartScrollOffset = 0
     this.isAutoScrolling = false
+    this.autoScrollingPageX = -1
 
     this.isDragging = false
     this.dragModeAnimatedValue = new Animated.Value(dragAnimationValue.noDragging)
@@ -77,12 +79,13 @@ export default class DraggableList extends React.PureComponent {
     this.targetIndex = -2
     this.targetIndexAnimatedValue = new Animated.Value(this.targetIndex)
 
-    this.panResponder = this.createPanResponder(props.cellTotalSize)
+    this.panResponder = this.createPanResponder()
   }
 
-  createPanResponder = (cellTotalSize) => {
+  createPanResponder = () => {
     return PanResponder.create({
       onStartShouldSetPanResponderCapture: (event) => {
+        const { cellTotalSize } = this.props
         const { pageX } = event.nativeEvent
         this.dragStartComponentLeft = pageX - (pageX + this.scrollOffset) % cellTotalSize.width
         this.dragAnimatedValue.setOffset({ x: this.dragStartComponentLeft, y: 0 })
@@ -104,7 +107,7 @@ export default class DraggableList extends React.PureComponent {
           this.createSwapAnimation(targetIndex).start()
           this.targetIndex = targetIndex
         }
-        this.isAutoScrollingPageX = pageX
+        this.autoScrollingPageX = pageX
         if (!this.isAutoScrolling && onReorder && this.trashMode !== trashModes.active) {
           this.isAutoScrolling = true
           this.scrollOnEdge()
@@ -120,6 +123,7 @@ export default class DraggableList extends React.PureComponent {
       onPanResponderTerminate: () => {
         this.resetState()
       },
+      onPanResponderTerminationRequest: () => !this.isDragging,
     })
   }
 
@@ -139,7 +143,7 @@ export default class DraggableList extends React.PureComponent {
 
   onDeleteItem = () => {
     this.createDraggableScaleAnimation(dragAnimationValue.destroyed).start(() => {
-      this.props.onDeleteItem(this.state.dragComponentStartIndex)
+      this.props.onDeleteItem(this.props.items[this.state.dragComponentStartIndex])
       this.resetState()
     })
   }
@@ -189,9 +193,9 @@ export default class DraggableList extends React.PureComponent {
 
   scrollOnEdge = () => {
     let newScrollOffset = 0
-    if (this.isAutoScrollingPageX < scrollMargin) {
+    if (this.autoScrollingPageX !== -1 && this.autoScrollingPageX < scrollMargin) {
       newScrollOffset = Math.max(0, this.scrollOffset - scrollPixels)
-    } else if (this.isAutoScrollingPageX > this.state.containerWidth - scrollMargin) {
+    } else if (this.autoScrollingPageX > this.state.containerWidth - scrollMargin) {
       newScrollOffset = this.scrollOffset + scrollPixels
     }
     if (newScrollOffset) {
@@ -214,6 +218,7 @@ export default class DraggableList extends React.PureComponent {
     this.targetIndexAnimatedValue.setValue(this.targetIndex)
     this.isDragging = false
     this.isAutoScrolling = false
+    this.autoScrollingPageX = -1
     this.dragAnimatedValue.setValue({ x: 0, y: 0 })
     this.trashMode = trashModes.hidden
     this.trashModeAnimatedValue.setValue(this.trashMode)
@@ -239,7 +244,7 @@ export default class DraggableList extends React.PureComponent {
         opacity: this.trashModeAnimatedValue.interpolate({
           inputRange: [available, active],
           outputRange: [1, 0.5],
-        })
+        }),
       }
     ]
   }
@@ -252,7 +257,7 @@ export default class DraggableList extends React.PureComponent {
         opacity: this.trashModeAnimatedValue.interpolate({
           inputRange: [available, active],
           outputRange: [0, 1],
-        })
+        }),
       }
     ]
   }
@@ -293,9 +298,9 @@ export default class DraggableList extends React.PureComponent {
             inputRange,
             outputRange,
             extrapolate: 'clamp',
-          })
+          }),
         }
-      ]
+      ],
     }
   }
 
@@ -343,18 +348,19 @@ export default class DraggableList extends React.PureComponent {
   }
 
   render() {
-    const { contentContainerStyle, extraItem, items, keyExtractor } = this.props
-    let allItems = [...items]
+    const { contentContainerStyle, extraItem, items, keyExtractor, listExtraData } = this.props
+    const allItems = [...items]
     if (extraItem) {
       allItems.push(extraItem)
     }
+    const extraData = { ...this.state, ...listExtraData }
     return (
       <View {...this.panResponder.panHandlers} onLayout={this.onLayout}>
         <FlatList
-          ref={ref => this.flatList = ref}
+          ref={ref => { this.flatList = ref }}
           contentContainerStyle={contentContainerStyle}
           data={allItems}
-          extraData={this.state}
+          extraData={extraData}
           getItemLayout={this.getItemLayout}
           horizontal={true}
           keyExtractor={keyExtractor}
