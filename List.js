@@ -17,6 +17,7 @@ const s = StyleSheet.create({
 
 export default class List extends React.PureComponent {
   static propTypes = {
+    canDeleteLast: PropTypes.bool.isRequired,
     extraItem: PropTypes.bool.isRequired,
     itemsCount: PropTypes.number.isRequired,
     itemText: PropTypes.string.isRequired,
@@ -32,18 +33,22 @@ export default class List extends React.PureComponent {
   }
 
   renderItem = ({ item, onLongPress, onPressOut }) => {
-    return <ListItem item={item} onLongPress={onLongPress} onPressOut={onPressOut} width={this.props.itemWidth}/>
+    const { itemWidth } = this.props
+    if (item.extra) {
+      return <ListItem item={item} width={itemWidth}/>
+    }
+    return <ListItem item={item} onLongPress={onLongPress} onPressOut={onPressOut} width={itemWidth}/>
   }
 
   keyExtractor = (item) => {
-    return `key-${item.id}`
+    return `key-${item.id || item.extra}`
   }
 
   reorderItems = items => {
     this.setState({ items })
   }
 
-  deleteItem = index => {
+  onDeleteItem = index => {
     const items = [...this.state.items]
     items.splice(index, 1)
     this.setState({ items })
@@ -54,19 +59,16 @@ export default class List extends React.PureComponent {
   }
 
   initItems = () => {
-    const { extraItem, itemsCount, itemText } = this.props
+    const { itemsCount, itemText } = this.props
     const items = []
     for (let i = 0; i < itemsCount; i++) {
       items.push({ id: i, text: `${itemText} ${i}` })
-    }
-    if (extraItem) {
-      items.push({ id: itemsCount, text: '➕' })
     }
     return items
   }
 
   render() {
-    const { extraItem, itemWidth, reorderEnabled } = this.props
+    const { canDeleteLast, extraItem, itemWidth, reorderEnabled } = this.props
     const cellTotalSize = {
       height: cellHeight + 2 * cellMargin,
       width: itemWidth + 2 * cellMargin
@@ -75,10 +77,11 @@ export default class List extends React.PureComponent {
       <View style={s.root}>
         <Button onPress={this.resetData} title="Reset data"/>
         <DraggableList
+          canDeleteLast={canDeleteLast}
           cellTotalSize={cellTotalSize}
           contentContainerStyle={s.list}
-          deleteItem={this.deleteItem}
-          extraItemIndex={extraItem ? this.state.items.length - 1 : undefined}
+          onDeleteItem={this.onDeleteItem}
+          extraItem={extraItem ? { extra: true, text: '➕' } : undefined}
           items={this.state.items}
           keyExtractor={this.keyExtractor}
           onReorder={reorderEnabled ? this.reorderItems : undefined}

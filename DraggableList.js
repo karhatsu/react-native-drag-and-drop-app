@@ -47,13 +47,14 @@ const dragAnimationValue = {
 
 export default class DraggableList extends React.PureComponent {
   static propTypes = {
+    canDeleteLast: PropTypes.bool.isRequired,
     cellTotalSize: PropTypes.shape({
       height: PropTypes.number.isRequired,
       width: PropTypes.number.isRequired,
     }).isRequired,
     contentContainerStyle: PropTypes.object,
-    deleteItem: PropTypes.func.isRequired,
-    extraItemIndex: PropTypes.number,
+    onDeleteItem: PropTypes.func.isRequired,
+    extraItem: PropTypes.object,
     items: PropTypes.array.isRequired,
     keyExtractor: PropTypes.func.isRequired,
     onReorder: PropTypes.func,
@@ -117,7 +118,7 @@ export default class DraggableList extends React.PureComponent {
       },
       onPanResponderRelease: () => {
         if (this.trashMode === trashModes.active) {
-          this.deleteItem()
+          this.onDeleteItem()
         } else {
           this.moveItem()
         }
@@ -126,22 +127,22 @@ export default class DraggableList extends React.PureComponent {
   }
 
   resolveTargetIndex = (dx) => {
-    const { cellTotalSize, extraItemIndex, items, onReorder } = this.props
+    const { cellTotalSize, items, onReorder } = this.props
     const { dragComponentStartIndex } = this.state
     if (this.trashMode === trashModes.active) {
       return items.length
     } else if (onReorder) {
       const dragStartComponentMiddle = this.scrollOffset + this.dragStartComponentLeft + cellTotalSize.width / 2
       const targetIndex = Math.floor((dragStartComponentMiddle + dx) / cellTotalSize.width)
-      return targetIndex >= extraItemIndex ? extraItemIndex - 1 : targetIndex
+      return targetIndex >= items.length ? items.length - 1 : targetIndex
     } else {
       return dragComponentStartIndex
     }
   }
 
-  deleteItem = () => {
+  onDeleteItem = () => {
     this.createDraggableScaleAnimation(dragAnimationValue.destroyed).start(() => {
-      this.props.deleteItem(this.state.dragComponentStartIndex)
+      this.props.onDeleteItem(this.state.dragComponentStartIndex)
       this.resetState()
     })
   }
@@ -314,10 +315,15 @@ export default class DraggableList extends React.PureComponent {
     }
   }
 
+  canDragItem = index => {
+    const { canDeleteLast, items } = this.props
+    return index < items.length && (items.length > 1 || canDeleteLast)
+  }
+
   renderItem = ({ item, index }) => {
-    const { extraItemIndex, renderItem } = this.props
-    const onLongPress = index === extraItemIndex ? undefined : this.onItemLongPress(item, index)
-    const onPressOut = index === extraItemIndex ? undefined : this.onItemPressOut
+    const { renderItem } = this.props
+    const onLongPress = this.canDragItem(index) ? this.onItemLongPress(item, index) : undefined
+    const onPressOut = this.canDragItem(index) ? this.onItemPressOut : undefined
     return (
       <Animated.View style={this.resolveItemStyles(index)}>
         {renderItem({ item, onLongPress, onPressOut })}
@@ -353,14 +359,18 @@ export default class DraggableList extends React.PureComponent {
   }
 
   render() {
-    const { contentContainerStyle, items, keyExtractor } = this.props
+    const { contentContainerStyle, extraItem, items, keyExtractor } = this.props
+    let allItems = [...items]
+    if (extraItem) {
+      allItems.push(extraItem)
+    }
     return (
       <View {...this.panResponder.panHandlers} onLayout={this.onLayout}>
         <Animated.View style={[s.trash, this.resolveTrashStyles()]}/>
         <FlatList
           ref={ref => this.flatList = ref}
           contentContainerStyle={contentContainerStyle}
-          data={items}
+          data={allItems}
           extraData={this.state}
           getItemLayout={this.getItemLayout}
           horizontal={true}
