@@ -29,12 +29,18 @@ export default class App extends React.Component {
     this.setState({ items })
   }
 
+  deleteItem = index => {
+    const { items } = this.state
+    items.splice(index, 1)
+    this.setState({ items })
+  }
+
   render() {
     return (
       <View style={s.container}>
         <Button onPress={this.resetData} title="Reset data"/>
         <Text style={s.text}>Text above the list</Text>
-        <List items={this.state.items} onReorder={this.reorderItems}/>
+        <List deleteItem={this.deleteItem} items={this.state.items} onReorder={this.reorderItems}/>
       </View>
     )
   }

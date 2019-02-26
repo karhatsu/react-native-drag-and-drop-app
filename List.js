@@ -16,6 +16,7 @@ const s = StyleSheet.create({
 
 export default class List extends React.PureComponent {
   static propTypes = {
+    deleteItem: PropTypes.func.isRequired,
     items: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number.isRequired,
     })).isRequired,
@@ -36,6 +37,7 @@ export default class List extends React.PureComponent {
         <DraggableList
           cellSize={cellSize + 2 * cellMargin}
           contentContainerStyle={s.list}
+          deleteItem={this.props.deleteItem}
           items={this.props.items}
           keyExtractor={this.keyExtractor}
           onReorder={this.props.onReorder}
