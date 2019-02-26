@@ -46,6 +46,7 @@ export default class DraggableList extends React.PureComponent {
       height: PropTypes.number.isRequired,
       width: PropTypes.number.isRequired,
     }).isRequired,
+    contentContainerHorizontalPadding: PropTypes.number.isRequired,
     contentContainerStyle: PropTypes.object, // eslint-disable-line react/forbid-prop-types
     onDeleteItem: PropTypes.func.isRequired,
     extraItem: PropTypes.object, // eslint-disable-line react/forbid-prop-types
@@ -85,9 +86,9 @@ export default class DraggableList extends React.PureComponent {
   createPanResponder = () => {
     return PanResponder.create({
       onStartShouldSetPanResponderCapture: (event) => {
-        const { cellTotalSize } = this.props
+        const { cellTotalSize, contentContainerHorizontalPadding } = this.props
         const { pageX } = event.nativeEvent
-        this.dragStartComponentLeft = pageX - (pageX + this.scrollOffset) % cellTotalSize.width
+        this.dragStartComponentLeft = pageX - (pageX + this.scrollOffset) % cellTotalSize.width + contentContainerHorizontalPadding
         this.dragAnimatedValue.setOffset({ x: this.dragStartComponentLeft, y: 0 })
         return false
       },

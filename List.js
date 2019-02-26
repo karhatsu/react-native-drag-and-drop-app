@@ -4,6 +4,8 @@ import { Button, StyleSheet, View } from 'react-native'
 import DraggableList from './DraggableList'
 import ListItem, { cellMargin, cellHeight } from './ListItem'
 
+const containerHorizontalPadding = 8
+
 const s = StyleSheet.create({
   root: {
     height: cellHeight + 2 * cellMargin,
@@ -12,6 +14,7 @@ const s = StyleSheet.create({
   },
   list: {
     backgroundColor: 'rgba(128,255,128,0.5)',
+    paddingHorizontal: containerHorizontalPadding,
   },
 })
 
@@ -80,6 +83,7 @@ export default class List extends React.PureComponent {
         <DraggableList
           canDeleteLast={canDeleteLast}
           cellTotalSize={cellTotalSize}
+          contentContainerHorizontalPadding={containerHorizontalPadding}
           contentContainerStyle={s.list}
           onDeleteItem={this.onDeleteItem}
           extraItem={extraItem ? { extra: true, text: '➕' } : undefined}
