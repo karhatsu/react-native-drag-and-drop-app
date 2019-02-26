@@ -33,7 +33,7 @@ export default class ListItem extends React.PureComponent {
   render() {
     const { item: { text }, onLongPress, onPressOut, width } = this.props
     return (
-      <TouchableOpacity onLongPress={onLongPress} onPressOut={onPressOut}>
+      <TouchableOpacity onLongPress={onLongPress} onPressOut={onPressOut} delayLongPress={200}>
         <View style={[s.item, { width }]}>
           <Text style={s.text}>{text}</Text>
         </View>
