@@ -211,6 +211,8 @@ export default class DraggableList extends React.PureComponent {
   }
 
   resolveDragComponentContainerStyles = () => {
+    const { destroyed, noDragging, dragging } = dragAnimationValue
+    const { available, active } = trashModes
     return [
       s.dragComponentContainer,
       {
@@ -219,11 +221,15 @@ export default class DraggableList extends React.PureComponent {
           { translateY: this.dragAnimatedValue.y },
           {
             scale: this.dragModeAnimatedValue.interpolate({
-              inputRange: [dragAnimationValue.destroyed, dragAnimationValue.noDragging, dragAnimationValue.dragging],
+              inputRange: [destroyed, noDragging, dragging],
               outputRange: [0, 1, 1.125],
             }),
           }
-        ]
+        ],
+        opacity: this.trashModeAnimatedValue.interpolate({
+          inputRange: [available, active],
+          outputRange: [1, 0.5],
+        })
       }
     ]
   }
