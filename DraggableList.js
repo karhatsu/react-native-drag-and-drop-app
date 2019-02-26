@@ -110,7 +110,7 @@ export default class DraggableList extends React.PureComponent {
           this.targetIndex = targetIndex
         }
         this.isAutoScrollingPageX = pageX
-        if (!this.isAutoScrolling && onReorder) {
+        if (!this.isAutoScrolling && onReorder && this.trashMode !== trashModes.active) {
           this.isAutoScrolling = true
           this.scrollOnEdge()
         }
