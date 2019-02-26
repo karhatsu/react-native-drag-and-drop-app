@@ -235,7 +235,7 @@ export default class DraggableList extends React.PureComponent {
           {
             scale: this.dragModeAnimatedValue.interpolate({
               inputRange: [destroyed, noDragging, dragging],
-              outputRange: [0, 1, 1.125],
+              outputRange: [0.01, 1, 1.125],
             }),
           }
         ],
