@@ -117,6 +117,9 @@ export default class DraggableList extends React.PureComponent {
           this.moveItem()
         }
       },
+      onPanResponderTerminate: () => {
+        this.resetState()
+      },
     })
   }
 
