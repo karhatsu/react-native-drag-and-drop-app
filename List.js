@@ -10,7 +10,8 @@ const s = StyleSheet.create({
   root: {
     height: cellHeight + 2 * cellMargin,
     width: '100%',
-    marginVertical: 30,
+    marginTop: 16,
+    marginBottom: 64,
   },
   list: {
     backgroundColor: 'rgba(128,255,128,0.5)',
@@ -82,7 +83,7 @@ export default class List extends React.PureComponent {
     return (
       <View style={s.root}>
         <Button onPress={this.resetData} title="Reset data"/>
-        {hasItems && 
+        {hasItems &&
           <DraggableList
             canDeleteLast={canDeleteLast}
             cellTotalSize={cellTotalSize}
