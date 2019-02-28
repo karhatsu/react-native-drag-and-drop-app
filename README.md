@@ -27,3 +27,10 @@ yarn run start
 
 * This supports only horizontal scrolling. Vertical scrolling wouldn't be however a hard thing to do. Basically change the `FlatList`'s `horizontal` prop and switch `x` and `y` in the `DraggableList` component.
 * The items need to have a fixed width (height if translated to vertical list). This simplifies dragging a lot as we can very easily calculate the target position of the draggable element.
+
+## Creators
+
+* [Henri Karhatsu](https://github.com/karhatsu)
+* [Anton Zvonkov](https://github.com/satellink)
+
+Powered by [Neverthink](http://about.neverthink.tv).
