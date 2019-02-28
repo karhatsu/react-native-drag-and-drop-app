@@ -36,12 +36,12 @@ export default class List extends React.PureComponent {
     }
   }
 
-  renderItem = ({ item, onLongPress, onPressOut }) => {
+  renderItem = ({ item, onLongPress, onPressOut, style }) => {
     const { itemWidth } = this.props
     if (item.extra) {
-      return <ListItem item={item} width={itemWidth}/>
+      return <ListItem item={item} style={style} width={itemWidth}/>
     }
-    return <ListItem item={item} onLongPress={onLongPress} onPressOut={onPressOut} width={itemWidth}/>
+    return <ListItem item={item} onLongPress={onLongPress} onPressOut={onPressOut} style={style} width={itemWidth}/>
   }
 
   keyExtractor = (item) => {
@@ -95,6 +95,7 @@ export default class List extends React.PureComponent {
             keyExtractor={this.keyExtractor}
             onReorder={reorderEnabled ? this.reorderItems : undefined}
             renderItem={this.renderItem}
+            trashThreshold={-cellTotalSize.height * 1.2}
           />
         }
         {!hasItems && <Text>Nothing left.</Text>}

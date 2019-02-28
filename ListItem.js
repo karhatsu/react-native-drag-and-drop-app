@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { Animated, StyleSheet, Text, TouchableOpacity } from "react-native"
 
 export const cellHeight = 80
 export const cellMargin = 8
@@ -27,16 +27,17 @@ export default class ListItem extends React.PureComponent {
     }).isRequired,
     onLongPress: PropTypes.func,
     onPressOut: PropTypes.func,
+    style: PropTypes.object,
     width: PropTypes.number.isRequired,
   }
 
   render() {
-    const { item: { text }, onLongPress, onPressOut, width } = this.props
+    const { item: { text }, onLongPress, onPressOut, style, width } = this.props
     return (
       <TouchableOpacity onLongPress={onLongPress} onPressOut={onPressOut} delayLongPress={200}>
-        <View style={[s.item, { width }]}>
+        <Animated.View style={[s.item, style, { width }]}>
           <Text style={s.text}>{text}</Text>
-        </View>
+        </Animated.View>
       </TouchableOpacity>
     )
   }

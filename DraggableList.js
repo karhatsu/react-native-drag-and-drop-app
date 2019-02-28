@@ -55,6 +55,7 @@ export default class DraggableList extends React.PureComponent {
     listExtraData: PropTypes.object, // eslint-disable-line react/forbid-prop-types
     onReorder: PropTypes.func,
     renderItem: PropTypes.func.isRequired,
+    trashThreshold: PropTypes.number.isRequired,
   }
 
   constructor(props) {
@@ -76,7 +77,6 @@ export default class DraggableList extends React.PureComponent {
     this.dragAnimatedValue = new Animated.ValueXY({ x: 0, y: 0 })
 
     this.trashMode = trashModes.hidden
-    this.trashModeAnimatedValue = new Animated.Value(this.trashMode)
 
     this.targetIndex = -2
     this.targetIndexAnimatedValue = new Animated.Value(this.targetIndex)
@@ -102,13 +102,12 @@ export default class DraggableList extends React.PureComponent {
         return this.isDragging
       },
       onPanResponderMove: (event, gestureState) => {
-        const { cellTotalSize, onReorder } = this.props
+        const { onReorder, trashThreshold } = this.props
         const { pageX } = event.nativeEvent
         const { dx, dy } = gestureState
         this.dragAnimatedValue.setValue({ x: dx, y: dy })
-        this.trashMode = dy < -cellTotalSize.height / 2 ? trashModes.active : trashModes.available
+        this.trashMode = dy < trashThreshold ? trashModes.active : trashModes.available
         const targetIndex = this.resolveTargetIndex(dx)
-        this.trashModeAnimatedValue.setValue(this.trashMode)
         if (targetIndex !== this.targetIndex) {
           this.createSwapAnimation(targetIndex).start()
           this.targetIndex = targetIndex
@@ -227,7 +226,6 @@ export default class DraggableList extends React.PureComponent {
     this.autoScrollingPageX = -1
     this.dragAnimatedValue.setValue({ x: 0, y: 0 })
     this.trashMode = trashModes.hidden
-    this.trashModeAnimatedValue.setValue(this.trashMode)
     if (this.mounted) {
       this.setState(defaultDragState)
     }
@@ -235,7 +233,6 @@ export default class DraggableList extends React.PureComponent {
 
   resolveDragComponentContainerStyles = () => {
     const { destroyed, noDragging, dragging } = dragAnimationValue
-    const { available, active } = trashModes
     return [
       s.dragComponentContainer,
       {
@@ -249,22 +246,39 @@ export default class DraggableList extends React.PureComponent {
             }),
           }
         ],
-        opacity: this.trashModeAnimatedValue.interpolate({
-          inputRange: [available, active],
-          outputRange: [1, 0.5],
-        }),
       }
     ]
   }
 
+  resolveDragComponentStyles = () => {
+    const { trashThreshold } = this.props
+    return {
+      opacity: this.dragAnimatedValue.y.interpolate({
+        inputRange: [trashThreshold * 1.1, trashThreshold],
+        outputRange: [0.5, 1],
+        extrapolate: 'clamp',
+      }),
+    }
+  }
+
   resolveTrashIconStyles = () => {
-    const { available, active } = trashModes
+    const { trashThreshold } = this.props
     return [
       s.trashIcon,
       {
-        opacity: this.trashModeAnimatedValue.interpolate({
-          inputRange: [available, active],
-          outputRange: [0, 1],
+        transform: [
+          {
+            scale: this.dragAnimatedValue.y.interpolate({
+              inputRange: [trashThreshold * 1.1, trashThreshold, trashThreshold * 0.9],
+              outputRange: [1, 1.2, 0.5],
+              extrapolate: 'clamp',
+            }),
+          }
+        ],
+        opacity: this.dragAnimatedValue.y.interpolate({
+          inputRange: [trashThreshold, trashThreshold * 0.9],
+          outputRange: [1, 0],
+          extrapolate: 'clamp',
         }),
       }
     ]
@@ -282,13 +296,12 @@ export default class DraggableList extends React.PureComponent {
 
   onItemLongPress = (item, index) => {
     return () => {
-      const dragComponent = this.props.renderItem({ item, index })
+      const dragComponent = this.props.renderItem({ item, index, style: this.resolveDragComponentStyles() })
       this.targetIndex = index
       this.targetIndexAnimatedValue.setValue(index)
       this.draggingStartScrollOffset = this.scrollOffset
       this.setState({ dragComponent, dragComponentStartIndex: index })
       this.createDraggableScaleAnimation(dragAnimationValue.dragging).start()
-      this.trashModeAnimatedValue.setValue(trashModes.available)
     }
   }
 
